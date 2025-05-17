@@ -1,13 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Play, Copy, Check, RefreshCw } from "lucide-react"
+import { compileCudaCode } from "@/services/cuda-compiler"
+
+interface CodeExample {
+  id: string;
+  name: string;
+  code: string;
+}
 
 // Predefined CUDA code examples
-const codeExamples = [
+const codeExamples: CodeExample[] = [
   {
     id: "vector-add",
     name: "Vector Addition",
@@ -78,17 +85,6 @@ int main() {
     
     return 0;
 }`,
-    output: `Vector Addition Results:
-h_c[0] = 0.0
-h_c[1] = 3.0
-h_c[2] = 6.0
-h_c[3] = 9.0
-h_c[4] = 12.0
-h_c[5] = 15.0
-h_c[6] = 18.0
-h_c[7] = 21.0
-h_c[8] = 24.0
-h_c[9] = 27.0`,
   },
   {
     id: "matrix-mul",
@@ -172,11 +168,6 @@ int main() {
     
     return 0;
 }`,
-    output: `Matrix Multiplication Results:
--8.0	-2.0	4.0	10.0	
--2.0	0.0	2.0	4.0	
-4.0	2.0	0.0	-2.0	
-10.0	4.0	-2.0	-8.0	`,
   },
   {
     id: "shared-memory",
@@ -257,18 +248,6 @@ int main() {
     
     return 0;
 }`,
-    output: `Shared Memory Example Results:
-Input	Output
-0.0	0.5
-1.0	1.5
-2.0	2.5
-3.0	3.5
-4.0	4.5
-5.0	5.5
-6.0	6.5
-7.0	7.5
-8.0	8.5
-9.0	9.0`,
   },
   {
     id: "atomic-operations",
@@ -327,44 +306,35 @@ int main() {
     
     return 0;
 }`,
-    output: `Atomic Operations Results:
-Counter (atomicAdd with 1): 1000 (expected 1000)
-Counter (atomicAdd with idx): 499500
-Counter (atomicMax): 999 (expected 999)`,
   },
 ]
 
-export default function CudaCodeSimulator() {
-  const [selectedExample, setSelectedExample] = useState(codeExamples[0])
-  const [output, setOutput] = useState("")
-  const [isRunning, setIsRunning] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [activeTab, setActiveTab] = useState("code")
+const CudaCodeSimulator: React.FC = () => {
+  const [selectedExample, setSelectedExample] = useState<CodeExample>(codeExamples[0])
+  const [output, setOutput] = useState<string>("")
+  const [isRunning, setIsRunning] = useState<boolean>(false)
+  const [copied, setCopied] = useState<boolean>(false)
+  const [activeTab, setActiveTab] = useState<string>("code")
 
-  const handleRun = () => {
+  const handleRun = async () => {
     setIsRunning(true)
     setOutput("")
     setActiveTab("output")
 
-    // Simulate compilation and execution delay
-    setTimeout(() => {
-      // Add compilation messages
-      setOutput("Compiling CUDA code...\n")
-    }, 500)
+    try {
+      // Compile and run the CUDA code
+      const result = await compileCudaCode(selectedExample.code)
+      
+      if (result.success) {
+        setOutput(result.output)
+      } else {
+        setOutput(`Compilation/Execution Error:\n${result.error}`)
+      }
+    } catch (error) {
+      setOutput("Error executing code. Please make sure CUDA is properly installed.")
+    }
 
-    setTimeout(() => {
-      setOutput((prev) => prev + "nvcc -o cuda_program cuda_program.cu\n")
-    }, 1000)
-
-    setTimeout(() => {
-      setOutput((prev) => prev + "Compilation successful!\n\nRunning program...\n\n")
-    }, 1500)
-
-    // Show the predefined output after a delay
-    setTimeout(() => {
-      setOutput((prev) => prev + selectedExample.output)
-      setIsRunning(false)
-    }, 2500)
+    setIsRunning(false)
   }
 
   const handleCopy = () => {
@@ -382,7 +352,7 @@ export default function CudaCodeSimulator() {
             <select
               className="bg-gray-800 text-gray-200 text-sm rounded border border-gray-600 px-2 py-1"
               value={selectedExample.id}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                 const selected = codeExamples.find((ex) => ex.id === e.target.value)
                 if (selected) {
                   setSelectedExample(selected)
@@ -407,7 +377,8 @@ export default function CudaCodeSimulator() {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-0">
+      
+      <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full bg-gray-700 rounded-none">
             <TabsTrigger value="code" className="flex-1">
@@ -436,7 +407,7 @@ export default function CudaCodeSimulator() {
           {isRunning ? (
             <>
               <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-              Running...
+              Compiling & Running...
             </>
           ) : (
             <>
@@ -449,3 +420,5 @@ export default function CudaCodeSimulator() {
     </Card>
   )
 }
+
+export default CudaCodeSimulator;
