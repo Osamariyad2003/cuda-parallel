@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowRight, Download, Layers, Cpu, Zap, Play } from "lucide-react"
 import Link from "next/link"
 import CudaCompilerGuide from "@/components/cuda-compiler-guide"
+import CudaChatbot from "@/components/cuda-chatbot"
 
 export default function Home() {
   return (
@@ -534,6 +535,9 @@ for (int idx = i; idx < n; idx += stride) {
           </div>
         </div>
       </footer>
+
+      {/* The chatbot will appear as a floating widget in the bottom-right corner */}
+      <CudaChatbot />
     </div>
   )
 }
