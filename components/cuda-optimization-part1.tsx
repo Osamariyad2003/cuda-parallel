@@ -950,7 +950,7 @@ export default function CudaOptimizationPart1() {
             </TabsContent>
             <TabsContent value="code" className="mt-4">
               <div className="relative">
-                <pre className="bg-gray-900 p-4 rounded-md overflow-x-auto text-sm text-gray-300 max-h-[500px] overflow-y-auto">
+                <pre className="bg-white text-black p-4 rounded-lg overflow-x-auto">
                   {cudaOptimizationPart1[currentStep].code}
                 </pre>
                 <Button
