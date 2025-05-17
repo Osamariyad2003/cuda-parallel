@@ -2,11 +2,12 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Send, Bot, User, X, Minimize, Maximize } from "lucide-react"
+import { Send, Bot, User, X, Minimize, Maximize, Mic, MicOff } from "lucide-react"
+import { deepSpeechService } from "@/services/deepSpeechService"
 
 // Define the message type
 type Message = {
@@ -111,6 +112,12 @@ function findResponse(query: string): string {
   return bestMatch.entry.response
 }
 
+// Add types for speech recognition
+type AudioState = {
+  isRecording: boolean
+  stream: MediaStream | null
+}
+
 export default function CudaChatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -123,6 +130,10 @@ export default function CudaChatbot() {
   const [input, setInput] = useState("")
   const [isMinimized, setIsMinimized] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [audioState, setAudioState] = useState<AudioState>({
+    isRecording: false,
+    stream: null,
+  })
 
   // Auto-scroll to bottom of messages
   useEffect(() => {
@@ -161,6 +172,48 @@ export default function CudaChatbot() {
       handleSendMessage()
     }
   }
+
+  // Function to handle speech recognition
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      setAudioState({ isRecording: true, stream })
+
+      // Create audio context and processor
+      const audioContext = new AudioContext()
+      const source = audioContext.createMediaStreamSource(stream)
+      const processor = audioContext.createScriptProcessor(4096, 1, 1)
+
+      source.connect(processor)
+      processor.connect(audioContext.destination)
+
+      // Process audio data
+      processor.onaudioprocess = async (e) => {
+        const inputData = e.inputBuffer.getChannelData(0)
+        try {
+          // Send audio data to DeepSpeech for processing
+          const transcription = await deepSpeechService.processAudio(inputData)
+          
+          if (transcription.trim()) {
+            // Add transcribed text to input
+            setInput((prev) => prev + " " + transcription)
+          }
+        } catch (error) {
+          console.error("Error processing audio with DeepSpeech:", error)
+        }
+      }
+
+    } catch (error) {
+      console.error("Error accessing microphone:", error)
+    }
+  }, [])
+
+  const stopRecording = useCallback(() => {
+    if (audioState.stream) {
+      audioState.stream.getTracks().forEach(track => track.stop())
+      setAudioState({ isRecording: false, stream: null })
+    }
+  }, [audioState.stream])
 
   return (
     <div className={`fixed bottom-4 right-4 z-50 transition-all duration-300 ${isMinimized ? "w-64" : "w-80 md:w-96"}`}>
@@ -240,6 +293,21 @@ export default function CudaChatbot() {
                   onKeyPress={handleKeyPress}
                   className="bg-gray-700 border-gray-600 text-white"
                 />
+                <Button
+                  onClick={() => {
+                    if (audioState.isRecording) {
+                      stopRecording()
+                    } else {
+                      startRecording()
+                    }
+                  }}
+                  size="icon"
+                  className={`${
+                    audioState.isRecording ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"
+                  }`}
+                >
+                  {audioState.isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </Button>
                 <Button onClick={handleSendMessage} size="icon" className="bg-green-500 hover:bg-green-600">
                   <Send className="h-4 w-4" />
                 </Button>
