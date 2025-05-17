@@ -498,31 +498,30 @@ export default function CudaBasicsTutorial() {
             <TabsContent value="content" className="mt-4">
               <div className="bg-gray-900 p-4 rounded-md overflow-y-auto max-h-[500px]">
                 <div className="prose prose-invert max-w-none">
-                  <div className="text-gray-200"
+                  <div
                     dangerouslySetInnerHTML={{
                       __html: cudaBasicsTutorial[currentStep].content
                         .replace(/\n/g, "<br>")
-                        .replace(/# (.*?)(\n|$)/g, "<h1 class='text-2xl font-bold text-green-400 mb-4'>$1</h1>")
-                        .replace(/## (.*?)(\n|$)/g, "<h2 class='text-xl font-semibold text-green-300 mt-6 mb-3'>$1</h2>")
-                        .replace(/### (.*?)(\n|$)/g, "<h3 class='text-lg font-medium text-green-200 mt-4 mb-2'>$1</h3>")
-                        .replace(/\*\*(.*?)\*\*/g, "<strong class='text-green-300'>$1</strong>")
-                        .replace(/- (.*?)(\n|$)/g, "<li class='ml-4 text-gray-300'>$1</li>")
-                        .replace(/```([\s\S]*?)```/g, "<pre class='bg-gray-800 p-3 rounded-md my-3 overflow-x-auto'><code>$1</code></pre>")
-                        .replace(/`([^`]+)`/g, "<code class='bg-gray-800 px-1 rounded text-green-300'>$1</code>")
-                  }}
+                        .replace(/# (.*)/g, "<h1>$1</h1>")
+                        .replace(/## (.*)/g, "<h2>$1</h2>")
+                        .replace(/### (.*)/g, "<h3>$1</h3>")
+                        .replace(/\*\*(.*)\*\*/g, "<strong>$1</strong>")
+                        .replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
+                        .replace(/`(.*?)`/g, "<code>$1</code>"),
+                    }}
                   />
                 </div>
               </div>
             </TabsContent>
             <TabsContent value="code" className="mt-4">
               <div className="relative">
-                <pre className="bg-gray-800 text-gray-200 p-4 rounded-lg overflow-x-auto font-mono text-sm">
-                  <code>{cudaBasicsTutorial[currentStep].code}</code>
+                <pre className="bg-gray-900 p-4 rounded-md overflow-x-auto text-sm text-gray-300 max-h-[500px] overflow-y-auto">
+                  {cudaBasicsTutorial[currentStep].code}
                 </pre>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="absolute top-2 right-2 bg-gray-700 border-gray-600 hover:bg-gray-600 text-gray-200"
+                  className="absolute top-2 right-2 bg-gray-800 border-gray-700 hover:bg-gray-700"
                   onClick={handleCopy}
                 >
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
